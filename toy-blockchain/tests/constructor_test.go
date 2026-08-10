@@ -3,6 +3,7 @@ package tests
 import (
 	"testing"
 	"toy-blockchain/blockchain"
+	"toy-blockchain/transaction"
 )
 
 func TestNewBlockchain_ConstructorFlow(t *testing.T) {
@@ -30,7 +31,7 @@ func TestNewBlockchain_ConstructorFlow(t *testing.T) {
 		t.Errorf("Step 4 failed: stored block PrevHash want 64 zeros, got %s", genesis.PrevHash)
 	}
 
-	bc.AddBlock([]blockchain.Transaction{{Sender: "Alice", Recipient: "Bob", Amount: 1.0}})
+	bc.AddBlock([]transaction.Transaction{{Sender: "Alice", Recipient: "Bob", Amount: 1.0}})
 	if len(bc.Blocks) != 2 {
 		t.Fatalf("Step 5 failed: chain not usable after construction — expected 2 blocks, got %d", len(bc.Blocks))
 	}

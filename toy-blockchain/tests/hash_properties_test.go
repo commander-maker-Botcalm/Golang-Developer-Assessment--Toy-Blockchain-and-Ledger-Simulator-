@@ -3,6 +3,7 @@ package tests
 import (
 	"testing"
 	"toy-blockchain/blockchain"
+	"toy-blockchain/transaction"
 )
 
 func TestCalculateHash_NotEmpty(t *testing.T) {
@@ -49,7 +50,7 @@ func TestCalculateHash_DifferentPrevHash(t *testing.T) {
 }
 
 func TestCalculateHash_GenesisHasNoPrevHash(t *testing.T) {
-	genesis := makeBlock(0, []blockchain.Transaction{}, "", 0)
+	genesis := makeBlock(0, []transaction.Transaction{}, "", 0)
 	if genesis.Hash == "" {
 		t.Fatal("Genesis block should still produce a valid hash")
 	}
@@ -70,8 +71,8 @@ func TestCalculateHash_NonceAffectsHash(t *testing.T) {
 }
 
 func TestCalculateHash_MultipleTransactions(t *testing.T) {
-	oneTx := []blockchain.Transaction{{Sender: "Alice", Recipient: "Bob", Amount: 10.0}}
-	twoTx := []blockchain.Transaction{
+	oneTx := []transaction.Transaction{{Sender: "Alice", Recipient: "Bob", Amount: 10.0}}
+	twoTx := []transaction.Transaction{
 		{Sender: "Alice", Recipient: "Bob", Amount: 10.0},
 		{Sender: "Bob", Recipient: "Carol", Amount: 5.0},
 	}

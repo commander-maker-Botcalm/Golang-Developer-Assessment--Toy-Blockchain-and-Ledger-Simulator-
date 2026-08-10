@@ -4,18 +4,19 @@ import (
 	"strings"
 	"testing"
 	"toy-blockchain/blockchain"
+	"toy-blockchain/transaction"
 )
 
 func TestMinePendingTransactions_CreatesBlockFromPendingPool(t *testing.T) {
 	bc := blockchain.NewBlockchain()
 
-	if err := bc.AddTransaction(blockchain.Transaction{Sender: "SYSTEM", Recipient: "Alice", Amount: 50}); err != nil {
+	if err := bc.AddTransaction(transaction.Transaction{Sender: "SYSTEM", Recipient: "Alice", Amount: 50}); err != nil {
 		t.Fatal(err)
 	}
-	if err := bc.AddTransaction(blockchain.Transaction{Sender: "SYSTEM", Recipient: "Bob", Amount: 20}); err != nil {
+	if err := bc.AddTransaction(transaction.Transaction{Sender: "SYSTEM", Recipient: "Bob", Amount: 20}); err != nil {
 		t.Fatal(err)
 	}
-	if err := bc.AddTransaction(blockchain.Transaction{Sender: "SYSTEM", Recipient: "Charlie", Amount: 10}); err != nil {
+	if err := bc.AddTransaction(transaction.Transaction{Sender: "SYSTEM", Recipient: "Charlie", Amount: 10}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -99,11 +100,11 @@ func TestMinePendingTransactions_UsesConfiguredBlockSize(t *testing.T) {
 	bc := blockchain.NewBlockchain()
 	bc.BlockSize = 2
 
-	if err := bc.AddTransaction(blockchain.Transaction{Sender: "SYSTEM", Recipient: "Alice", Amount: 100}); err != nil {
+	if err := bc.AddTransaction(transaction.Transaction{Sender: "SYSTEM", Recipient: "Alice", Amount: 100}); err != nil {
 		t.Fatal(err)
 	}
 
-	for _, tx := range []blockchain.Transaction{
+	for _, tx := range []transaction.Transaction{
 		{Sender: "SYSTEM", Recipient: "Bob", Amount: 10},
 		{Sender: "SYSTEM", Recipient: "Carol", Amount: 5},
 		{Sender: "SYSTEM", Recipient: "David", Amount: 3},

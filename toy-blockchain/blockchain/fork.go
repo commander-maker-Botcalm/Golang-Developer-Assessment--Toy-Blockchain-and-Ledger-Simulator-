@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"toy-blockchain/transaction"
 )
 
 // CopyBlockchain performs a deep copy of a Blockchain. The returned copy does
@@ -16,7 +17,7 @@ func CopyBlockchain(bc *Blockchain) *Blockchain {
 
 	copyBC := &Blockchain{
 		Blocks:              make([]*Block, 0, len(bc.Blocks)),
-		PendingTransactions: make([]Transaction, 0, len(bc.PendingTransactions)),
+		PendingTransactions: make([]transaction.Transaction, 0, len(bc.PendingTransactions)),
 		Difficulty:          bc.Difficulty,
 		BlockSize:           bc.BlockSize,
 	}
@@ -28,7 +29,7 @@ func CopyBlockchain(bc *Blockchain) *Blockchain {
 			continue
 		}
 		// copy transactions slice
-		txs := make([]Transaction, len(b.Transactions))
+		txs := make([]transaction.Transaction, len(b.Transactions))
 		copy(txs, b.Transactions)
 
 		nb := &Block{
@@ -47,7 +48,7 @@ func CopyBlockchain(bc *Blockchain) *Blockchain {
 
 	// Deep copy pending transactions
 	if len(bc.PendingTransactions) > 0 {
-		pts := make([]Transaction, len(bc.PendingTransactions))
+		pts := make([]transaction.Transaction, len(bc.PendingTransactions))
 		copy(pts, bc.PendingTransactions)
 		copyBC.PendingTransactions = pts
 	}

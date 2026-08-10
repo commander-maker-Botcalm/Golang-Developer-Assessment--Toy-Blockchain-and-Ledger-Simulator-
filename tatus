@@ -1,0 +1,31 @@
+warning: in the working copy of 'toy-blockchain/alice.pem', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'toy-blockchain/blockchain.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'toy-blockchain/blockchain/block.go', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'toy-blockchain/blockchain/blockchain.go', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'toy-blockchain/blockchain/hash.go', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'toy-blockchain/cmd/main.go', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'toy-blockchain/tests/constructor_test.go', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'toy-blockchain/tests/hash_properties_test.go', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'toy-blockchain/tests/helpers_test.go', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'toy-blockchain/tests/mining_test.go', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'toy-blockchain/tests/signature_test.go', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'toy-blockchain/tests/transaction_test.go', LF will be replaced by CRLF the next time Git touches it
+ Blockchain_Report_Devinda H.G.N..pdf          | Bin [31m229540[m -> [32m0[m bytes
+ Golang Developer Assessment ToyBlockchain.pdf | Bin [31m186245[m -> [32m0[m bytes
+ toy-blockchain/alice.pem                      |   8 [32m+[m[31m-[m
+ toy-blockchain/blockchain.json                |  83 [32m+++[m[31m---------------[m
+ toy-blockchain/blockchain/block.go            |  46 [32m+++++[m[31m-----[m
+ toy-blockchain/blockchain/blockchain.go       |  41 [32m++++[m[31m-----[m
+ toy-blockchain/blockchain/fork.go             |   7 [32m+[m[31m-[m
+ toy-blockchain/blockchain/hash.go             |   5 [32m+[m[31m-[m
+ toy-blockchain/blockchain/transaction.go      | 119 [31m--------------------------[m
+ toy-blockchain/bob.pem                        |   5 [31m--[m
+ toy-blockchain/charlie.pem                    |   5 [31m--[m
+ toy-blockchain/cmd/main.go                    |  50 [32m+++++[m[31m------[m
+ toy-blockchain/tests/constructor_test.go      |   3 [32m+[m[31m-[m
+ toy-blockchain/tests/hash_properties_test.go  |   7 [32m+[m[31m-[m
+ toy-blockchain/tests/helpers_test.go          |  11 [32m++[m[31m-[m
+ toy-blockchain/tests/mining_test.go           |  11 [32m+[m[31m--[m
+ toy-blockchain/tests/signature_test.go        |  68 [32m++++++++[m[31m-------[m
+ toy-blockchain/tests/transaction_test.go      |  25 [32m+++[m[31m---[m
+ 18 files changed, 160 insertions(+), 334 deletions(-)

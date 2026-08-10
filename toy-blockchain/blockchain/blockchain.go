@@ -1,13 +1,14 @@
 package blockchain
 
 import (
-	"bytes"
-	"encoding/json"
+	"bytes"         //helps work with byte slices, used here for trimming whitespace when reading a file.
+	"encoding/json" //handles JSON encoding and decoding, used for saving and loading the blockchain.
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
+	"os"            //interacts with the operating system, used for reading and writing files.
+	"path/filepath" //handles file paths in a platform-safe way, used when creating directories for save files.
+	"strings"       //provides string operations, used here to check proof-of-work difficulty by repeating zeros and checking prefixes.
+	"time"          //works with dates and durations, used for block timestamps and mining-time calculations.
+	"toy-blockchain/transaction"
 )
 
 // GenesisPrevHash is the canonical previous-hash value for the Genesis block.
@@ -71,10 +72,10 @@ func recentAverageMiningTime(bc *Blockchain, n int) time.Duration {
 // Blockchain is an ordered slice of Block pointers.
 // The first element (index 0) is always the Genesis block.
 type Blockchain struct {
-	Blocks              []*Block      `json:"blocks"`
-	PendingTransactions []Transaction `json:"pendingTransactions"`
-	Difficulty          int           `json:"difficulty"`
-	BlockSize           int           `json:"blockSize"`
+	Blocks              []*Block                  `json:"blocks"`
+	PendingTransactions []transaction.Transaction `json:"pendingTransactions"`
+	Difficulty          int                       `json:"difficulty"`
+	BlockSize           int                       `json:"blockSize"`
 }
 
 // NewBlockchain is the constructor for a fresh Blockchain.
@@ -109,7 +110,7 @@ func NewBlockchainWithConfig(difficulty, blockSize int) *Blockchain {
 	// Step 1 — New Blockchain: allocate an empty chain.
 	bc := &Blockchain{
 		Blocks:              []*Block{},
-		PendingTransactions: []Transaction{},
+		PendingTransactions: []transaction.Transaction{},
 		Difficulty:          difficulty,
 		BlockSize:           blockSize,
 	}
@@ -154,7 +155,7 @@ func newGenesisBlock() *Block {
 	return &Block{
 		Index:        0,
 		Timestamp:    0,
-		Transactions: []Transaction{},
+		Transactions: []transaction.Transaction{},
 		PrevHash:     GenesisPrevHash,
 		Nonce:        0,
 		// Hash is intentionally left empty — filled in by NewBlockchain Step 3.
@@ -195,12 +196,12 @@ func (bc *Blockchain) balances(includePending bool) map[string]float64 {
 
 // AddTransaction validates a transaction and adds it to the pending transactions pool.
 // For non-SYSTEM transactions, it verifies the cryptographic signature before acceptance.
-func (bc *Blockchain) AddTransaction(tx Transaction) error {
+func (bc *Blockchain) AddTransaction(tx transaction.Transaction) error {
 	if tx.Amount <= 0 {
 		return fmt.Errorf("transaction amount must be greater than zero, got %f", tx.Amount)
 	}
 	if tx.Sender != "SYSTEM" {
-		valid, err := VerifyTransaction(&tx)
+		valid, err := transaction.VerifyTransaction(&tx)
 		if err != nil {
 			return fmt.Errorf("signature verification error: %v", err)
 		}
@@ -246,7 +247,7 @@ func LoadFromFile(path string) (*Blockchain, error) {
 		return NewBlockchainWithConfig(bc.Difficulty, bc.BlockSize), nil
 	}
 	if bc.PendingTransactions == nil {
-		bc.PendingTransactions = []Transaction{}
+		bc.PendingTransactions = []transaction.Transaction{}
 	}
 	return &bc, nil
 }
@@ -272,7 +273,7 @@ func (bc *Blockchain) SaveToFile(path string) error {
 // It is a convenience wrapper for the pending-transaction flow:
 //  1. Append txs to PendingTransactions
 //  2. MinePendingTransactions()
-func (bc *Blockchain) AddBlock(txs []Transaction) {
+func (bc *Blockchain) AddBlock(txs []transaction.Transaction) {
 	bc.PendingTransactions = append(bc.PendingTransactions, txs...)
 	bc.MinePendingTransactions()
 }
@@ -286,13 +287,13 @@ func (bc *Blockchain) MinePendingTransactions() {
 	}
 
 	bc.applyDefaults()
-	prev := bc.Blocks[len(bc.Blocks)-1]
+	prev := bc.Blocks[len(bc.Blocks)-1] //Gets the most recent block in the chain so the new block can link to it.
 	maxTransactions := len(bc.PendingTransactions)
 	if bc.BlockSize > 0 && bc.BlockSize < maxTransactions {
 		maxTransactions = bc.BlockSize
 	}
 
-	transactionsToMine := append([]Transaction(nil), bc.PendingTransactions[:maxTransactions]...)
+	transactionsToMine := append([]transaction.Transaction(nil), bc.PendingTransactions[:maxTransactions]...)
 	newBlock := NewBlock(prev.Index+1, transactionsToMine, prev.Hash)
 
 	// Set the block's Difficulty to the current network difficulty before
@@ -334,9 +335,9 @@ func (bc *Blockchain) MinePendingTransactions() {
 	bc.Difficulty = nextDifficulty
 
 	if maxTransactions < len(bc.PendingTransactions) {
-		bc.PendingTransactions = append([]Transaction(nil), bc.PendingTransactions[maxTransactions:]...)
+		bc.PendingTransactions = append([]transaction.Transaction(nil), bc.PendingTransactions[maxTransactions:]...)
 	} else {
-		bc.PendingTransactions = []Transaction{}
+		bc.PendingTransactions = []transaction.Transaction{}
 	}
 }
 

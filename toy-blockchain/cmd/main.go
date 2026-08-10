@@ -1,7 +1,7 @@
 package main
 
 import (
-	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -10,8 +10,10 @@ import (
 	"strconv"
 	"strings"
 	"toy-blockchain/blockchain"
+	"toy-blockchain/transaction"
 )
 
+// simply print help messages
 func usage() {
 	fmt.Println("Usage:")
 	fmt.Println("  go run ./cmd init")
@@ -130,7 +132,7 @@ func senderMatchesKeyFile(sender, keyFile string) bool {
 	return strings.EqualFold(sender, base)
 }
 
-func LoadPrivateKeyFromFile(path string) (*ecdsa.PrivateKey, error) {
+func LoadPrivateKeyFromFile(path string) (ed25519.PrivateKey, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -141,22 +143,19 @@ func LoadPrivateKeyFromFile(path string) (*ecdsa.PrivateKey, error) {
 		return nil, fmt.Errorf("failed to decode PEM from %s", path)
 	}
 
-	switch block.Type {
-	case "EC PRIVATE KEY":
-		return x509.ParseECPrivateKey(block.Bytes)
-	case "PRIVATE KEY":
-		decoded, err := x509.ParsePKCS8PrivateKey(block.Bytes)
-		if err != nil {
-			return nil, err
-		}
-		privateKey, ok := decoded.(*ecdsa.PrivateKey)
-		if !ok {
-			return nil, fmt.Errorf("unsupported private key type: %T", decoded)
-		}
-		return privateKey, nil
-	default:
+	if block.Type != "PRIVATE KEY" {
 		return nil, fmt.Errorf("unsupported PEM block type: %s", block.Type)
 	}
+
+	decoded, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	privateKey, ok := decoded.(ed25519.PrivateKey)
+	if !ok {
+		return nil, fmt.Errorf("unsupported private key type: %T", decoded)
+	}
+	return privateKey, nil
 }
 
 func isCommand(arg string) bool {
@@ -225,15 +224,16 @@ func main() {
 			fmt.Fprintf(os.Stderr, "invalid amount: %v\n", err)
 			os.Exit(1)
 		}
-		tx := blockchain.Transaction{Sender: cmdArgs[0], Recipient: cmdArgs[1], Amount: amount}
+		tx := transaction.Transaction{Sender: cmdArgs[0], Recipient: cmdArgs[1], Amount: amount}
 		if cmdArgs[0] != "SYSTEM" {
 			privateKey, err := LoadPrivateKeyFromFile(keyFile)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "failed to load private key: %v\n", err)
 				os.Exit(1)
 			}
-			tx.PublicKey = blockchain.PublicKeyToString(&privateKey.PublicKey)
-			signature, err := blockchain.SignTransaction(&tx, privateKey)
+			publicKey := privateKey.Public().(ed25519.PublicKey)
+			tx.PublicKey = transaction.PublicKeyToString(publicKey)
+			signature, err := transaction.SignTransaction(&tx, privateKey)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "failed to sign transaction: %v\n", err)
 				os.Exit(1)
@@ -261,18 +261,18 @@ func main() {
 			fmt.Fprintln(os.Stderr, "generate-key requires a non-empty name")
 			os.Exit(1)
 		}
-		privateKey, err := blockchain.GenerateKeyPair()
+		privateKey, err := transaction.GenerateKeyPair()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "failed to generate key pair: %v\n", err)
 			os.Exit(1)
 		}
-		encoded, err := x509.MarshalECPrivateKey(privateKey)
+		encoded, err := x509.MarshalPKCS8PrivateKey(privateKey)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "failed to encode private key: %v\n", err)
 			os.Exit(1)
 		}
 		path := fmt.Sprintf("%s.pem", name)
-		if err := os.WriteFile(path, pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: encoded}), 0o600); err != nil {
+		if err := os.WriteFile(path, pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: encoded}), 0o600); err != nil {
 			fmt.Fprintf(os.Stderr, "failed to write private key file: %v\n", err)
 			os.Exit(1)
 		}
@@ -328,8 +328,8 @@ func main() {
 
 		// Mine one different block on each chain starting from the same parent.
 		fmt.Println("Mining divergent blocks on each chain...")
-		txA := blockchain.Transaction{Sender: "SYSTEM", Recipient: "ForkA", Amount: 1}
-		txB := blockchain.Transaction{Sender: "SYSTEM", Recipient: "ForkB", Amount: 2}
+		txA := transaction.Transaction{Sender: "SYSTEM", Recipient: "ForkA", Amount: 1}
+		txB := transaction.Transaction{Sender: "SYSTEM", Recipient: "ForkB", Amount: 2}
 
 		_ = chainA.AddTransaction(txA)
 		chainA.MinePendingTransactions()
@@ -340,7 +340,7 @@ func main() {
 		// Extend chainA to make it longer (simulate longer fork)
 		fmt.Println("Extending chain A to be longer...")
 		for i := 0; i < 2; i++ {
-			t := blockchain.Transaction{Sender: "SYSTEM", Recipient: fmt.Sprintf("A_extra_%d", i), Amount: float64(i + 1)}
+			t := transaction.Transaction{Sender: "SYSTEM", Recipient: fmt.Sprintf("A_extra_%d", i), Amount: float64(i + 1)}
 			_ = chainA.AddTransaction(t)
 			chainA.MinePendingTransactions()
 		}

@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"strings"
+	"toy-blockchain/transaction"
 )
 
 // CalculateHash produces a deterministic SHA-256 hash for a given Block.
@@ -53,7 +54,7 @@ func CalculateHash(b *Block) string {
 // HashTransaction deterministically serializes and hashes a single transaction
 // using the existing serialization format: "Sender|Recipient|Amount(8dp)".
 // It returns the lowercase hex SHA-256 digest.
-func HashTransaction(tx Transaction) string {
+func HashTransaction(tx transaction.Transaction) string {
 	record := fmt.Sprintf("%s|%s|%.8f", tx.Sender, tx.Recipient, tx.Amount)
 	sum := sha256.Sum256([]byte(record))
 	return fmt.Sprintf("%x", sum)
@@ -66,7 +67,7 @@ func HashTransaction(tx Transaction) string {
 // - adjacent pairs are concatenated (left||right) and SHA-256 hashed to build the next level
 // - if a level has an odd number of nodes, the last node is duplicated
 // - repeat until a single root remains
-func CalculateMerkleRoot(txs []Transaction) string {
+func CalculateMerkleRoot(txs []transaction.Transaction) string {
 	if len(txs) == 0 {
 		sum := sha256.Sum256([]byte(""))
 		return fmt.Sprintf("%x", sum)

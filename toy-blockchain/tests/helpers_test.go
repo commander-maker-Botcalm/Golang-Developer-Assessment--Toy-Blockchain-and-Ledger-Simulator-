@@ -1,9 +1,12 @@
 package tests
 
-import "toy-blockchain/blockchain"
+import (
+	"toy-blockchain/blockchain"
+	"toy-blockchain/transaction"
+)
 
 // makeBlock builds a Block with a fixed timestamp for reproducibility.
-func makeBlock(index int, txs []blockchain.Transaction, prevHash string, timestamp int64) *blockchain.Block {
+func makeBlock(index int, txs []transaction.Transaction, prevHash string, timestamp int64) *blockchain.Block {
 	b := &blockchain.Block{
 		Index:        index,
 		Timestamp:    timestamp,
@@ -16,8 +19,8 @@ func makeBlock(index int, txs []blockchain.Transaction, prevHash string, timesta
 }
 
 // singleTx is a convenience helper for tests that need one transaction.
-func singleTx(from, to string, amount float64) []blockchain.Transaction {
-	return []blockchain.Transaction{{Sender: from, Recipient: to, Amount: amount}}
+func singleTx(from, to string, amount float64) []transaction.Transaction {
+	return []transaction.Transaction{{Sender: from, Recipient: to, Amount: amount}}
 }
 
 // baseBlock returns a fully populated reference block used as the baseline

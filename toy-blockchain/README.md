@@ -58,6 +58,8 @@ The CLI supports these commands:
   - Validate blockchain integrity and proof-of-work
 - `go run ./cmd simulate-fork`
   - Simulate a local fork with two independent chain copies, competing blocks, and longest-chain resolution
+- `go run ./cmd run-node --listen :8081 --peer http://localhost:8082 --file node1.json`
+  - Start the node HTTP service for introspection and status
 
 ## Runtime Configuration
 
@@ -70,6 +72,37 @@ go run ./cmd mine --difficulty=5 --blocksize=2 --file=mychain.json
 - `--difficulty` sets proof-of-work difficulty (default: `4`)
 - `--blocksize` limits how many pending transactions are included in the mined block (default: `10`)
 - `--file` chooses the JSON file used for blockchain persistence (default: `blockchain.json`)
+- `--listen` / `--address` sets the HTTP listen address for `run-node`
+- `--peer` registers a peer URL for future node operations
+
+## Example: Initialize a node and create a block
+
+This example creates a chain file, adds transactions, mines a block, and starts the node HTTP service.
+
+```bash
+go run ./cmd init --file node1.json
+
+go run ./cmd generate-key alice
+
+go run ./cmd addtx SYSTEM Alice 50 --file node1.json
+
+go run ./cmd addtx Alice Bob 20 --key alice.pem --file node1.json
+
+go run ./cmd mine --file node1.json
+
+go run ./cmd run-node --listen :8081 --peer http://localhost:8082 --file node1.json
+```
+
+Once the node is running, you can inspect it at:
+
+```bash
+curl http://localhost:8081/health
+curl http://localhost:8081/status
+curl http://localhost:8081/chain
+curl http://localhost:8081/block/0
+curl http://localhost:8081/mempool
+curl http://localhost:8081/balances
+```
 
 ## New Features
 

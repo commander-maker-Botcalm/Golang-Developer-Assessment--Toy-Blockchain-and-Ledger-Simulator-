@@ -278,6 +278,25 @@ func (bc *Blockchain) AddBlock(txs []transaction.Transaction) {
 	bc.MinePendingTransactions()
 }
 
+// RemovePendingTransactions removes any matching transactions from the pending pool.
+func (bc *Blockchain) RemovePendingTransactions(txs []transaction.Transaction) {
+	if len(txs) == 0 {
+		return
+	}
+	seen := make(map[string]struct{}, len(txs))
+	for _, tx := range txs {
+		seen[transaction.TransactionID(tx)] = struct{}{}
+	}
+	remaining := make([]transaction.Transaction, 0, len(bc.PendingTransactions))
+	for _, tx := range bc.PendingTransactions {
+		if _, ok := seen[transaction.TransactionID(tx)]; ok {
+			continue
+		}
+		remaining = append(remaining, tx)
+	}
+	bc.PendingTransactions = remaining
+}
+
 // MinePendingTransactions creates a new block from the pending transaction pool,
 // mines it using the blockchain's configured difficulty and block size, appends it
 // to the chain, and leaves any unmined transactions pending.
@@ -403,6 +422,65 @@ func (bc *Blockchain) Validate() error {
 		}
 	}
 
+	return nil
+}
+
+// ValidateBlock validates a candidate block against the current chain state.
+// It checks the block hash, PoW, link to the current tip, basic transaction
+// validity, and the resulting ledger balance progression.
+func (bc *Blockchain) ValidateBlock(candidate *Block) error {
+	if candidate == nil {
+		return fmt.Errorf("block is nil")
+	}
+	if len(bc.Blocks) == 0 {
+		return fmt.Errorf("cannot validate block against an empty chain")
+	}
+	if candidate.Hash != CalculateHash(candidate) {
+		return fmt.Errorf("stored hash does not match calculated hash")
+	}
+	if candidate.MerkleRoot != CalculateMerkleRoot(candidate.Transactions) {
+		return fmt.Errorf("invalid merkle root")
+	}
+	if candidate.Difficulty <= 0 {
+		candidate.Difficulty = bc.Difficulty
+	}
+	prev := bc.Blocks[len(bc.Blocks)-1]
+	if candidate.Index != prev.Index+1 {
+		return fmt.Errorf("block index %d does not extend current head %d", candidate.Index, prev.Index)
+	}
+	if candidate.PrevHash != prev.Hash {
+		return fmt.Errorf("block previous hash does not match current head")
+	}
+	if candidate.Timestamp < prev.Timestamp {
+		return fmt.Errorf("block timestamp is earlier than previous block")
+	}
+	blockTarget := strings.Repeat("0", candidate.Difficulty)
+	if !strings.HasPrefix(candidate.Hash, blockTarget) {
+		return fmt.Errorf("proof of work not satisfied")
+	}
+
+	balances := bc.balances(false)
+	for _, tx := range candidate.Transactions {
+		if tx.Amount <= 0 {
+			return fmt.Errorf("transaction amount must be greater than zero")
+		}
+		if tx.Sender != "SYSTEM" {
+			valid, err := transaction.VerifyTransaction(&tx)
+			if err != nil {
+				return fmt.Errorf("signature verification error: %v", err)
+			}
+			if !valid {
+				return fmt.Errorf("invalid transaction signature")
+			}
+			if balances[tx.Sender] < tx.Amount {
+				return fmt.Errorf("insufficient balance for sender %s", tx.Sender)
+			}
+		}
+		if tx.Sender != "SYSTEM" {
+			balances[tx.Sender] -= tx.Amount
+		}
+		balances[tx.Recipient] += tx.Amount
+	}
 	return nil
 }
 

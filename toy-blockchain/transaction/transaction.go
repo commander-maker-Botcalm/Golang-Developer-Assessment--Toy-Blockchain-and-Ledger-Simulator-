@@ -23,6 +23,13 @@ func (tx Transaction) String() string {
 	return fmt.Sprintf("%s → %s : %.8f", tx.Sender, tx.Recipient, tx.Amount)
 }
 
+// TransactionID creates a deterministic ID for a transaction from its canonical fields.
+func TransactionID(tx Transaction) string {
+	payload := fmt.Sprintf("%s|%s|%.8f|%s|%s", tx.Sender, tx.Recipient, tx.Amount, tx.PublicKey, tx.Signature)
+	sum := sha256.Sum256([]byte(payload))
+	return hex.EncodeToString(sum[:])
+}
+
 // GenerateKeyPair creates a new Ed25519 private/public key pair for transaction signing.
 func GenerateKeyPair() (ed25519.PrivateKey, error) {
 	publicKey, privateKey, err := ed25519.GenerateKey(rand.Reader)

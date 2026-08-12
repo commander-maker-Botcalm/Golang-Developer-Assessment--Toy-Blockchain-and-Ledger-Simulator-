@@ -77,7 +77,7 @@ go run ./cmd mine --difficulty=5 --blocksize=2 --file=mychain.json
 
 ## Example: Initialize a node and create a block
 
-This example creates a chain file, adds transactions, mines a block, and starts the node HTTP service.
+This example creates a chain file, adds transactions, mines a block, starts the node HTTP service and synchronization.
 
 ```bash
 go run ./cmd init --file node1.json
@@ -91,6 +91,8 @@ go run ./cmd addtx Alice Bob 20 --key alice.pem --file node1.json
 go run ./cmd mine --file node1.json
 
 go run ./cmd run-node --listen :8081 --peer http://localhost:8082 --file node1.json
+
+curl "http://localhost:8081/sync?peer=http://localhost:8082"
 ```
 
 Once the node is running, you can inspect it at:

@@ -7,7 +7,7 @@
       "previousHash": "0000000000000000000000000000000000000000000000000000000000000000",
       "nonce": 0,
       "merkleRoot": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "difficulty": 1,
+      "difficulty": 4,
       "miningTimeNanoseconds": 0,
       "hash": "ca834f95f2748190599809de42c1de2422533e15e300f4d116bdd61a0c5a128b"
     },
@@ -69,15 +69,7 @@
       "hash": "00e4378766cfc599120763cc38799f1bcfc3e6495ce2fc609eeb41dab08329d6"
     }
   ],
-  "pendingTransactions": [
-    {
-      "sender": "Alice",
-      "recipient": "Bob",
-      "amount": 10,
-      "publicKey": "5fa4089ab30f8c3366e6f3267874e365847378772dceb7a04e055082480ec54f",
-      "signature": "a4a7325a1e01285d7b563e1fe866084c6302e1e5fdef42127d15601cd18a30ab50eb7a12974f24bb13976164c8b2a9510e9981f920614787702146e85d9d6606"
-    }
-  ],
-  "difficulty": 2,
+  "pendingTransactions": [],
+  "difficulty": 4,
   "blockSize": 10
 }

@@ -7,13 +7,13 @@
       "previousHash": "0000000000000000000000000000000000000000000000000000000000000000",
       "nonce": 0,
       "merkleRoot": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "difficulty": 1,
+      "difficulty": 4,
       "miningTimeNanoseconds": 0,
       "hash": "ca834f95f2748190599809de42c1de2422533e15e300f4d116bdd61a0c5a128b"
     },
     {
       "index": 1,
-      "timestamp": 1786436055815105100,
+      "timestamp": 1786532700689504300,
       "transactions": [
         {
           "sender": "SYSTEM",
@@ -24,60 +24,14 @@
         }
       ],
       "previousHash": "ca834f95f2748190599809de42c1de2422533e15e300f4d116bdd61a0c5a128b",
-      "nonce": 143,
+      "nonce": 200652,
       "merkleRoot": "85d19f4fd0fbf6761f32d17b91d18f8248427ed8d721d79019d06d9b1341bae6",
-      "difficulty": 1,
-      "miningTimeNanoseconds": 0,
-      "hash": "04db7a9d88ca0b7d1921bd956792e46e344c8e16d951a7a926717f78dee97b08"
-    },
-    {
-      "index": 2,
-      "timestamp": 1786438670931610900,
-      "transactions": [
-        {
-          "sender": "Alice",
-          "recipient": "Bob",
-          "amount": 10,
-          "publicKey": "5fa4089ab30f8c3366e6f3267874e365847378772dceb7a04e055082480ec54f",
-          "signature": "a4a7325a1e01285d7b563e1fe866084c6302e1e5fdef42127d15601cd18a30ab50eb7a12974f24bb13976164c8b2a9510e9981f920614787702146e85d9d6606"
-        }
-      ],
-      "previousHash": "04db7a9d88ca0b7d1921bd956792e46e344c8e16d951a7a926717f78dee97b08",
-      "nonce": 555,
-      "merkleRoot": "42cfbcbb2827b2841ca5dc42e8ccee8dc83502db334b5ac3dab749b081ed371c",
-      "difficulty": 2,
-      "miningTimeNanoseconds": 0,
-      "hash": "006ca3b1aec7b2c4e26f5e50646828179b119efcf87bad0ce41ae77692b5a001"
-    },
-    {
-      "index": 3,
-      "timestamp": 1786440725707095400,
-      "transactions": [
-        {
-          "sender": "Alice",
-          "recipient": "Bob",
-          "amount": 10,
-          "publicKey": "5fa4089ab30f8c3366e6f3267874e365847378772dceb7a04e055082480ec54f",
-          "signature": "a4a7325a1e01285d7b563e1fe866084c6302e1e5fdef42127d15601cd18a30ab50eb7a12974f24bb13976164c8b2a9510e9981f920614787702146e85d9d6606"
-        }
-      ],
-      "previousHash": "006ca3b1aec7b2c4e26f5e50646828179b119efcf87bad0ce41ae77692b5a001",
-      "nonce": 1979,
-      "merkleRoot": "42cfbcbb2827b2841ca5dc42e8ccee8dc83502db334b5ac3dab749b081ed371c",
-      "difficulty": 2,
-      "miningTimeNanoseconds": 2284100,
-      "hash": "00e4378766cfc599120763cc38799f1bcfc3e6495ce2fc609eeb41dab08329d6"
+      "difficulty": 4,
+      "miningTimeNanoseconds": 41444800,
+      "hash": "0000b6d1ed6819fad14be39646fb2a69679ce9877da21cd8b55cc6b419288e02"
     }
   ],
-  "pendingTransactions": [
-    {
-      "sender": "Alice",
-      "recipient": "Bob",
-      "amount": 10,
-      "publicKey": "5fa4089ab30f8c3366e6f3267874e365847378772dceb7a04e055082480ec54f",
-      "signature": "a4a7325a1e01285d7b563e1fe866084c6302e1e5fdef42127d15601cd18a30ab50eb7a12974f24bb13976164c8b2a9510e9981f920614787702146e85d9d6606"
-    }
-  ],
-  "difficulty": 2,
+  "pendingTransactions": [],
+  "difficulty": 5,
   "blockSize": 10
 }

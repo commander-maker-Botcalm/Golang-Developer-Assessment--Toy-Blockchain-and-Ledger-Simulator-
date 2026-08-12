@@ -83,6 +83,7 @@ func (n *Node) Start() error {
 	mux.HandleFunc("/transactions", n.transactionsHandler)
 	mux.HandleFunc("/blocks", n.blocksHandler)
 	mux.HandleFunc("/blocks/range", n.blocksRangeHandler)
+	mux.HandleFunc("/mine", n.mineHandler)
 	mux.HandleFunc("/sync", n.syncHandler)
 
 	ln, err := net.Listen("tcp", n.Config.ListenAddr)
@@ -95,6 +96,28 @@ func (n *Node) Start() error {
 
 	go func() {
 		_ = n.httpServer.Serve(ln)
+	}()
+
+	// Auto-sync from configured peers shortly after startup.
+	// This attempts to fetch longer chains from peers so a fresh node
+	// coming online will catch up automatically.
+	go func() {
+		// small delay to allow peers to come up when started together
+		time.Sleep(200 * time.Millisecond)
+		peers := n.copyPeers()
+		for _, p := range peers {
+			peerURL := strings.TrimRight(p, "/")
+			if !strings.HasPrefix(peerURL, "http://") && !strings.HasPrefix(peerURL, "https://") {
+				peerURL = "http://" + peerURL
+			}
+			if err := n.SyncFromPeer(peerURL); err != nil {
+				n.logger.Printf("auto-sync: failed to sync from %s: %v", peerURL, err)
+			} else {
+				n.logger.Printf("auto-sync: successfully synced from %s", peerURL)
+				// stop after first successful sync to avoid redundant work
+				return
+			}
+		}
 	}()
 
 	return nil
@@ -272,16 +295,16 @@ func (n *Node) handleIncomingBlock(block *blockchain.Block) (bool, error) {
 		n.logger.Printf("duplicate block ignored hash=%s", blockID)
 		return false, nil
 	}
-	if err := n.Blockchain.ValidateBlock(block); err != nil {
-		n.logger.Printf("rejected block hash=%s err=%v", blockID, err)
-		return false, err
-	}
 
-	// Check if this block extends the current chain
 	currentHead := n.Blockchain.Blocks[len(n.Blockchain.Blocks)-1]
 	isLinear := (block.PrevHash == currentHead.Hash && block.Index == currentHead.Index+1)
 
 	if isLinear {
+		if err := n.Blockchain.ValidateBlock(block); err != nil {
+			n.logger.Printf("rejected block hash=%s err=%v", blockID, err)
+			return false, err
+		}
+
 		// Normal case: block extends current chain
 		n.Blockchain.Blocks = append(n.Blockchain.Blocks, block)
 		n.Blockchain.RemovePendingTransactions(block.Transactions)
@@ -292,17 +315,144 @@ func (n *Node) handleIncomingBlock(block *blockchain.Block) (bool, error) {
 		}
 		go n.gossipBlock(block)
 		return true, nil
-	} else {
-		// Fork case: block is valid but doesn't extend current chain
-		// Store it as a competing block for potential later reorganization
-		if n.forks[block.Index] == nil {
-			n.forks[block.Index] = make(map[string]*blockchain.Block)
-		}
-		n.forks[block.Index][blockID] = block
-		n.seenBlocks[blockID] = struct{}{}
-		n.logger.Printf("stored competing block hash=%s at index=%d (potential fork)", blockID, block.Index)
-		return false, nil // Not added to main chain but marked as seen
 	}
+
+	if err := n.validateForkCandidate(block); err != nil {
+		n.logger.Printf("rejected fork block hash=%s err=%v", blockID, err)
+		return false, err
+	}
+
+	// Fork case: block is valid but doesn't extend current chain
+	// Store it as a competing block for potential later reorganization
+	if n.forks[block.Index] == nil {
+		n.forks[block.Index] = make(map[string]*blockchain.Block)
+	}
+	n.forks[block.Index][blockID] = block
+	n.seenBlocks[blockID] = struct{}{}
+	n.logger.Printf("stored competing block hash=%s at index=%d (potential fork)", blockID, block.Index)
+
+	accepted, err := n.tryResolveForksLocked()
+	if err != nil {
+		n.logger.Printf("fork resolution error: %v", err)
+		return false, err
+	}
+	return accepted, nil
+}
+
+func (n *Node) validateForkCandidate(block *blockchain.Block) error {
+	if block == nil {
+		return fmt.Errorf("block is nil")
+	}
+	if block.Hash != blockchain.CalculateHash(block) {
+		return fmt.Errorf("stored hash does not match calculated hash")
+	}
+	if block.MerkleRoot != blockchain.CalculateMerkleRoot(block.Transactions) {
+		return fmt.Errorf("invalid merkle root")
+	}
+	if block.Difficulty <= 0 {
+		block.Difficulty = n.Blockchain.Difficulty
+	}
+	blockTarget := strings.Repeat("0", block.Difficulty)
+	if !strings.HasPrefix(block.Hash, blockTarget) {
+		return fmt.Errorf("proof of work not satisfied")
+	}
+	if block.Index <= 0 {
+		return fmt.Errorf("invalid block index %d", block.Index)
+	}
+	return nil
+}
+
+func (n *Node) tryResolveForksLocked() (bool, error) {
+	currentLen := len(n.Blockchain.Blocks)
+	var bestCandidate []*blockchain.Block
+
+	for _, competingBlocks := range n.forks {
+		for _, forkBlock := range competingBlocks {
+			candidate := n.BuildCandidateChain(forkBlock, n.forks)
+			if candidate == nil || len(candidate) == 0 {
+				continue
+			}
+
+			forkStart := candidate[0].Index
+			candidateTotalLength := forkStart + len(candidate)
+			if candidateTotalLength <= currentLen {
+				continue
+			}
+
+			if err := n.validateCandidateChainLocked(candidate); err != nil {
+				n.logger.Printf("candidate chain invalid starting at index %d: %v", forkStart, err)
+				continue
+			}
+
+			if bestCandidate == nil {
+				bestCandidate = candidate
+				continue
+			}
+
+			bestTotal := bestCandidate[0].Index + len(bestCandidate)
+			if candidateTotalLength > bestTotal {
+				bestCandidate = candidate
+			}
+		}
+	}
+
+	if bestCandidate == nil {
+		return false, nil
+	}
+
+	if err := n.reorganizeChainLocked(bestCandidate); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (n *Node) validateCandidateChainLocked(candidate []*blockchain.Block) error {
+	if len(candidate) == 0 {
+		return fmt.Errorf("candidate chain is empty")
+	}
+	forkStart := candidate[0].Index
+	if forkStart <= 0 || forkStart > len(n.Blockchain.Blocks) {
+		return fmt.Errorf("invalid fork start index %d", forkStart)
+	}
+
+	clone := blockchain.CopyBlockchain(n.Blockchain)
+	clone.Blocks = append([]*blockchain.Block(nil), clone.Blocks[:forkStart]...)
+
+	for _, block := range candidate {
+		if err := clone.ValidateBlock(block); err != nil {
+			return err
+		}
+		clone.Blocks = append(clone.Blocks, block)
+	}
+	return nil
+}
+
+func (n *Node) reorganizeChainLocked(candidate []*blockchain.Block) error {
+	forkStart := candidate[0].Index
+	if forkStart <= 0 || forkStart > len(n.Blockchain.Blocks) {
+		return fmt.Errorf("invalid reorganize start index %d", forkStart)
+	}
+
+	newBlocks := append([]*blockchain.Block(nil), n.Blockchain.Blocks[:forkStart]...)
+	newBlocks = append(newBlocks, candidate...)
+	n.Blockchain.Blocks = newBlocks
+
+	for _, block := range candidate {
+		n.Blockchain.RemovePendingTransactions(block.Transactions)
+		n.seenBlocks[block.Hash] = struct{}{}
+	}
+
+	if err := n.Blockchain.SaveToFile(n.Config.DataFile); err != nil {
+		n.logger.Printf("failed to persist blockchain after reorg err=%v", err)
+		return err
+	}
+
+	for idx := forkStart; idx < len(n.Blockchain.Blocks); idx++ {
+		delete(n.forks, idx)
+	}
+
+	n.logger.Printf("reorganized chain at index=%d, new height=%d", forkStart, len(n.Blockchain.Blocks)-1)
+	return nil
 }
 
 func (n *Node) BroadcastBlock(block *blockchain.Block) {
@@ -529,6 +679,45 @@ func (n *Node) blocksRangeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	blocks := n.Blockchain.Blocks[from : to+1]
 	writeJSON(w, blocks)
+}
+
+// mineHandler handles POST /mine and mines pending transactions on this node.
+func (n *Node) mineHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	n.lock.Lock()
+	if n.Blockchain == nil {
+		n.lock.Unlock()
+		http.Error(w, "blockchain not initialized", http.StatusInternalServerError)
+		return
+	}
+
+	if len(n.Blockchain.PendingTransactions) == 0 {
+		n.lock.Unlock()
+		writeJSON(w, map[string]interface{}{"status": "no_pending_transactions"})
+		return
+	}
+
+	// Mine pending transactions (updates chain and difficulty internally)
+	n.Blockchain.MinePendingTransactions()
+
+	// Get the newly mined block (last element)
+	newBlock := n.Blockchain.Blocks[len(n.Blockchain.Blocks)-1]
+	n.seenBlocks[newBlock.Hash] = struct{}{}
+
+	// Persist
+	if err := n.Blockchain.SaveToFile(n.Config.DataFile); err != nil {
+		n.logger.Printf("mine: failed to persist blockchain: %v", err)
+	}
+	n.lock.Unlock()
+
+	// Gossip the new block to peers
+	go n.gossipBlock(newBlock)
+
+	writeJSON(w, map[string]interface{}{"status": "mined", "index": newBlock.Index, "hash": newBlock.Hash})
 }
 
 // syncHandler handles GET /sync?peer=<peerURL> and triggers manual sync.

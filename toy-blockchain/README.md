@@ -84,7 +84,7 @@ go run ./cmd init --file node1.json
 
 go run ./cmd generate-key alice
 
-go run ./cmd addtx SYSTEM Alice 50 --file node1.json
+go run ./cmd addtx SYSTEM Alice 50 --file node1.json   ##writes the tx into the JSON file and exits; it does not POST to any node process
 
 go run ./cmd addtx Alice Bob 20 --key alice.pem --file node1.json
 
@@ -105,7 +105,14 @@ curl http://localhost:8081/block/0
 curl http://localhost:8081/mempool
 curl http://localhost:8081/balances
 ```
+## Submit the tx to a running node's HTTP API (this triggers gossip).
 
+```bash
+Invoke-RestMethod -Method Post -Uri http://localhost:8081/transactions `
+  -ContentType "application/json" -Body '{"sender":"SYSTEM","recipient":"Alice","amount":100}'
+
+Invoke-RestMethod -Method Post -Uri http://localhost:8081/mine
+```
 ## New Features
 
 - `simulate-fork` simulates a fork between two independent copies of the local blockchain and resolves the fork using the longest valid chain.

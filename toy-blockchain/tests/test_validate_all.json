@@ -13,7 +13,7 @@
     },
     {
       "index": 1,
-      "timestamp": 1786533150782835600,
+      "timestamp": 1786598687723337000,
       "transactions": [
         {
           "sender": "SYSTEM",
@@ -24,15 +24,15 @@
         }
       ],
       "previousHash": "ca834f95f2748190599809de42c1de2422533e15e300f4d116bdd61a0c5a128b",
-      "nonce": 39383,
+      "nonce": 27168,
       "merkleRoot": "6a02d0de341be9215a077ba66bb7f835e842de4df0a72b9f28c14d8db034af97",
       "difficulty": 4,
-      "miningTimeNanoseconds": 14472800,
-      "hash": "00007b4ce99ad9536d8642a39c813ffe21ff7a5271224f00aefdf347995351f5"
+      "miningTimeNanoseconds": 16956400,
+      "hash": "0000bec6526982c5224b67afd91f4b006a1e702778cc09743188b6e758b60b5b"
     },
     {
       "index": 2,
-      "timestamp": 1786533150797308400,
+      "timestamp": 1786598687740875100,
       "transactions": [
         {
           "sender": "SYSTEM",
@@ -42,16 +42,16 @@
           "signature": ""
         }
       ],
-      "previousHash": "00007b4ce99ad9536d8642a39c813ffe21ff7a5271224f00aefdf347995351f5",
-      "nonce": 719698,
+      "previousHash": "0000bec6526982c5224b67afd91f4b006a1e702778cc09743188b6e758b60b5b",
+      "nonce": 261409,
       "merkleRoot": "8b6d52ee581791cd144f2b06c9d9a59729b13f0140626497be2a0b69f5301076",
       "difficulty": 5,
-      "miningTimeNanoseconds": 291900100,
-      "hash": "000005b50469d8a188dc009eefd6177f6263fc112541fc94aafe3a1eb7957f8c"
+      "miningTimeNanoseconds": 267176000,
+      "hash": "0000078173399643ef37b760ef41fe44962969e417d8c81b18a7fad0f3ca3974"
     },
     {
       "index": 3,
-      "timestamp": 1786533151089208500,
+      "timestamp": 1786598688008571900,
       "transactions": [
         {
           "sender": "SYSTEM",
@@ -61,12 +61,12 @@
           "signature": ""
         }
       ],
-      "previousHash": "000005b50469d8a188dc009eefd6177f6263fc112541fc94aafe3a1eb7957f8c",
-      "nonce": 4422047,
+      "previousHash": "0000078173399643ef37b760ef41fe44962969e417d8c81b18a7fad0f3ca3974",
+      "nonce": 16626653,
       "merkleRoot": "061a51ceb3c71419f6bbb494bef1c42fd12569670e3c44edd0cffd94566e8ca8",
       "difficulty": 6,
-      "miningTimeNanoseconds": 1815834500,
-      "hash": "00000093be2d746a30cd1a6446221a703a1489c06839d88cf3b5cf913b03125b"
+      "miningTimeNanoseconds": 15170959100,
+      "hash": "000000c1fb6a319567514ea9588dc5204903abed627e09e7725e37931cbb3538"
     }
   ],
   "pendingTransactions": [],

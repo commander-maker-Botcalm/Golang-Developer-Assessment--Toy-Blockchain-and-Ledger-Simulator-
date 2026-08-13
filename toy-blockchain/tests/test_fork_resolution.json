@@ -1,0 +1,102 @@
+{
+  "blocks": [
+    {
+      "index": 0,
+      "timestamp": 0,
+      "transactions": [],
+      "previousHash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "nonce": 0,
+      "merkleRoot": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "difficulty": 4,
+      "miningTimeNanoseconds": 0,
+      "hash": "ca834f95f2748190599809de42c1de2422533e15e300f4d116bdd61a0c5a128b"
+    },
+    {
+      "index": 1,
+      "timestamp": 1786598703192378300,
+      "transactions": [
+        {
+          "sender": "SYSTEM",
+          "recipient": "BaseRecipient",
+          "amount": 50,
+          "publicKey": "",
+          "signature": ""
+        }
+      ],
+      "previousHash": "ca834f95f2748190599809de42c1de2422533e15e300f4d116bdd61a0c5a128b",
+      "nonce": 285118,
+      "merkleRoot": "98b5ada9626b4e6b5370f03b9fb307f13a876eea71ed08bcd96599c9e490568f",
+      "difficulty": 4,
+      "miningTimeNanoseconds": 236141600,
+      "hash": "0000c2968993d3a1973675143a773248c0037a642174045b04b0f066ecbc18d4"
+    },
+    {
+      "index": 2,
+      "timestamp": 1786598703995971200,
+      "transactions": [
+        {
+          "sender": "SYSTEM",
+          "recipient": "BlockB",
+          "amount": 200,
+          "publicKey": "",
+          "signature": ""
+        }
+      ],
+      "previousHash": "0000c2968993d3a1973675143a773248c0037a642174045b04b0f066ecbc18d4",
+      "nonce": 2744267,
+      "merkleRoot": "b7a67ede20c81a65dd170a0ebdd882c0e8e7e2036c3a6be027d7f9164d0e8346",
+      "difficulty": 6,
+      "miningTimeNanoseconds": 2506964700,
+      "hash": "00000076013a6970dbcc512864b206b13e877490a6bb2b044b7fa104e1b4239e"
+    },
+    {
+      "index": 3,
+      "timestamp": 1786598706502935900,
+      "transactions": [
+        {
+          "sender": "SYSTEM",
+          "recipient": "BlockBPrime",
+          "amount": 300,
+          "publicKey": "",
+          "signature": ""
+        }
+      ],
+      "previousHash": "00000076013a6970dbcc512864b206b13e877490a6bb2b044b7fa104e1b4239e",
+      "nonce": 398459,
+      "merkleRoot": "a40cbae3e27f1e97138264cfdc209e5cede0c6718a4ecddd790da8426adc3009",
+      "difficulty": 5,
+      "miningTimeNanoseconds": 403083100,
+      "hash": "00000f076aca316d918317a1719bb151893cdcb14be3f6a1703dc10f3ef40b8d"
+    },
+    {
+      "index": 4,
+      "timestamp": 1786598706906703100,
+      "transactions": [
+        {
+          "sender": "SYSTEM",
+          "recipient": "BlockBDoublePrime",
+          "amount": 400,
+          "publicKey": "",
+          "signature": ""
+        }
+      ],
+      "previousHash": "00000f076aca316d918317a1719bb151893cdcb14be3f6a1703dc10f3ef40b8d",
+      "nonce": 251215,
+      "merkleRoot": "48303f18edd2a5bb0d34153ccd25ab549bc1dea1b18a33d5c015406c58f7614b",
+      "difficulty": 4,
+      "miningTimeNanoseconds": 208794200,
+      "hash": "0000da1aebd0e6e8402f6503c73b0e0e6d97acab1f6ffbb6f2749a270770e635"
+    }
+  ],
+  "pendingTransactions": [
+    {
+      "sender": "SYSTEM",
+      "recipient": "BlockA",
+      "amount": 100,
+      "publicKey": "",
+      "signature": ""
+    }
+  ],
+  "difficulty": 6,
+  "blockSize": 10
+}

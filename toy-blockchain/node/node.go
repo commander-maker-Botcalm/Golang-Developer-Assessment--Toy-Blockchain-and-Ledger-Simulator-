@@ -246,7 +246,7 @@ func (n *Node) blocksHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("invalid block JSON: %v", err), http.StatusBadRequest)
 		return
 	}
-	accepted, err := n.handleIncomingBlock(&block)
+	accepted, err := n.HandleIncomingBlock(&block)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -284,7 +284,7 @@ func (n *Node) handleIncomingTransaction(tx transaction.Transaction) (bool, erro
 	return true, nil
 }
 
-func (n *Node) handleIncomingBlock(block *blockchain.Block) (bool, error) {
+func (n *Node) HandleIncomingBlock(block *blockchain.Block) (bool, error) {
 	n.lock.Lock()
 	defer n.lock.Unlock()
 	if n.Blockchain == nil {
@@ -433,25 +433,78 @@ func (n *Node) reorganizeChainLocked(candidate []*blockchain.Block) error {
 		return fmt.Errorf("invalid reorganize start index %d", forkStart)
 	}
 
+	// Phase 4.4a: Identify orphaned blocks (old chain blocks that will be replaced)
+	oldHeight := len(n.Blockchain.Blocks) - 1
+	orphanedBlocks := n.Blockchain.Blocks[forkStart:]
+	n.logger.Printf("reorg: found %d orphaned blocks at heights %d-%d", len(orphanedBlocks), forkStart, oldHeight)
+
+	// Phase 4.4b: Replace main chain blocks
 	newBlocks := append([]*blockchain.Block(nil), n.Blockchain.Blocks[:forkStart]...)
 	newBlocks = append(newBlocks, candidate...)
 	n.Blockchain.Blocks = newBlocks
 
+	// Phase 4.4c: Mark new blocks as seen and remove their txs from pending
 	for _, block := range candidate {
 		n.Blockchain.RemovePendingTransactions(block.Transactions)
 		n.seenBlocks[block.Hash] = struct{}{}
 	}
 
+	// Phase 4.4d: Extract transactions from orphaned blocks
+	var orphanedTxs []transaction.Transaction
+	for _, orphanBlock := range orphanedBlocks {
+		if orphanBlock != nil {
+			orphanedTxs = append(orphanedTxs, orphanBlock.Transactions...)
+		}
+	}
+
+	// Phase 4.4e: Rebuild ledger state and validate orphaned transactions
+	// Rebuild balances based on the new canonical chain (post-reorg)
+	validatedOrphanedTxs := []transaction.Transaction{}
+	for _, tx := range orphanedTxs {
+		// Skip if we've already seen this tx in the new chain
+		txID := transaction.TransactionID(tx)
+		alreadyInChain := false
+		for _, block := range candidate {
+			for _, blockTx := range block.Transactions {
+				if transaction.TransactionID(blockTx) == txID {
+					alreadyInChain = true
+					break
+				}
+			}
+			if alreadyInChain {
+				break
+			}
+		}
+		if alreadyInChain {
+			continue
+		}
+
+		// Validate the orphaned tx against current balances (based on new chain)
+		if err := n.Blockchain.AddTransaction(tx); err != nil {
+			n.logger.Printf("reorg: orphaned tx rejected (not restoring) tx=%s err=%v", txID, err)
+			continue
+		}
+		validatedOrphanedTxs = append(validatedOrphanedTxs, tx)
+		n.logger.Printf("reorg: restored orphaned tx tx=%s", txID)
+	}
+
+	// Phase 4.4f: Persist the new canonical chain and updated mempool to disk
 	if err := n.Blockchain.SaveToFile(n.Config.DataFile); err != nil {
-		n.logger.Printf("failed to persist blockchain after reorg err=%v", err)
+		n.logger.Printf("reorg: failed to persist blockchain after reorg err=%v", err)
 		return err
 	}
 
+	// Clean up fork storage at or below the reorganization point
 	for idx := forkStart; idx < len(n.Blockchain.Blocks); idx++ {
 		delete(n.forks, idx)
 	}
 
-	n.logger.Printf("reorganized chain at index=%d, new height=%d", forkStart, len(n.Blockchain.Blocks)-1)
+	oldHeightStr := fmt.Sprintf("%d", oldHeight)
+	newHeightStr := fmt.Sprintf("%d", len(n.Blockchain.Blocks)-1)
+	orphanedCountStr := fmt.Sprintf("%d", len(orphanedBlocks))
+	restoredCountStr := fmt.Sprintf("%d", len(validatedOrphanedTxs))
+	n.logger.Printf("reorg complete: fork_start=%d old_height=%s new_height=%s orphaned=%s restored_txs=%s",
+		forkStart, oldHeightStr, newHeightStr, orphanedCountStr, restoredCountStr)
 	return nil
 }
 

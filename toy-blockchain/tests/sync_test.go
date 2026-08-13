@@ -644,3 +644,146 @@ func TestOrphanedTransactionRestoration(t *testing.T) {
 		t.Error("blockchain is invalid after reorg with orphaned tx restoration")
 	}
 }
+
+// TestConcurrentBlockIngestion tests that multiple blocks arriving concurrently are handled safely.
+// Phase 4.5: Race audit - blockchain access concurrency
+func TestConcurrentBlockIngestion(t *testing.T) {
+	bc := blockchain.NewBlockchain()
+	// Set initial difficulty low to avoid timeout during mining
+	bc.Difficulty = 1
+	for i := 0; i < 3; i++ {
+		tx := transaction.Transaction{
+			Sender:    "SYSTEM",
+			Recipient: fmt.Sprintf("User%d", i),
+			Amount:    float64(100 + i),
+		}
+		bc.AddTransaction(tx)
+		bc.MinePendingTransactions()
+	}
+
+	n := node.NewNode(node.NodeConfig{
+		ListenAddr: "localhost:0",
+		Peers:      []string{},
+		DataFile:   "test_concurrent_blocks.json",
+		Difficulty: 1,
+		BlockSize:  10,
+	})
+	n.Blockchain = bc
+
+	if err := n.Start(); err != nil {
+		t.Fatalf("failed to start node: %v", err)
+	}
+	defer n.Shutdown(nil)
+
+	// Create 5 different fork blocks at height 2
+	forkBlocks := make([]*blockchain.Block, 5)
+	for i := 0; i < 5; i++ {
+		forkChain := blockchain.CopyBlockchain(bc)
+		forkChain.Blocks = forkChain.Blocks[:2] // Reset to height 1
+
+		forkTx := transaction.Transaction{
+			Sender:    "SYSTEM",
+			Recipient: fmt.Sprintf("Fork%d", i),
+			Amount:    float64(1000 + i),
+		}
+		forkChain.AddTransaction(forkTx)
+		forkChain.MinePendingTransactions()
+
+		forkBlocks[i] = forkChain.Blocks[2]
+	}
+
+	// Submit all fork blocks concurrently
+	done := make(chan bool, 5)
+	for i := 0; i < 5; i++ {
+		go func(idx int) {
+			_, _ = n.HandleIncomingBlock(forkBlocks[idx])
+			done <- true
+		}(i)
+	}
+
+	// Wait for all to complete
+	for i := 0; i < 5; i++ {
+		<-done
+	}
+
+	// Verify node didn't crash and state is consistent
+	if n.Blockchain == nil {
+		t.Error("blockchain became nil after concurrent block ingestion")
+	}
+
+	// At least one fork block should be stored
+	competingBlocks := n.GetCompetingBlocks()
+	if len(competingBlocks) == 0 {
+		t.Error("expected fork blocks to be stored")
+	}
+
+	// Chain should still be valid
+	if !n.Blockchain.IsValid() {
+		t.Error("blockchain is invalid after concurrent block ingestion")
+	}
+}
+
+// TestConcurrentSyncAndMining tests that sync and mining operations don't race.
+// Phase 4.5: Race audit - sync and mining concurrency
+func TestConcurrentSyncAndMining(t *testing.T) {
+	// Create peer blockchain with blocks
+	peerBC := blockchain.NewBlockchain()
+	for i := 0; i < 2; i++ {
+		tx := transaction.Transaction{
+			Sender:    "SYSTEM",
+			Recipient: fmt.Sprintf("User%d", i),
+			Amount:    float64(100 + i),
+		}
+		peerBC.AddTransaction(tx)
+		peerBC.MinePendingTransactions()
+	}
+
+	// Create local node with only genesis
+	localBC := blockchain.NewBlockchain()
+	n := node.NewNode(node.NodeConfig{
+		ListenAddr: "localhost:0",
+		Peers:      []string{},
+		DataFile:   "test_sync_mining.json",
+		Difficulty: 2,
+		BlockSize:  10,
+	})
+	n.Blockchain = localBC
+
+	if err := n.Start(); err != nil {
+		t.Fatalf("failed to start node: %v", err)
+	}
+	defer n.Shutdown(nil)
+
+	// Prepare blocks to sync
+	blocksToSync := peerBC.Blocks[1:]
+
+	// Concurrently apply sync and trigger mining
+	done := make(chan bool, 2)
+
+	// Goroutine 1: Sync blocks from peer
+	go func() {
+		_ = n.ApplySyncedBlocks(blocksToSync)
+		done <- true
+	}()
+
+	// Goroutine 2: Mine pending transactions
+	go func() {
+		time.Sleep(50 * time.Millisecond) // Let sync start
+		n.Blockchain.MinePendingTransactions()
+		done <- true
+	}()
+
+	// Wait for all to complete
+	for i := 0; i < 2; i++ {
+		<-done
+	}
+
+	// Verify final state is consistent
+	if !n.Blockchain.IsValid() {
+		t.Error("blockchain is invalid after concurrent sync and mining")
+	}
+
+	if len(n.Blockchain.Blocks) < 3 {
+		t.Errorf("expected at least 3 blocks after sync and mining, got %d", len(n.Blockchain.Blocks))
+	}
+}

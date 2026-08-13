@@ -13,7 +13,7 @@
     },
     {
       "index": 1,
-      "timestamp": 1786601892616772100,
+      "timestamp": 1786601928338590900,
       "transactions": [
         {
           "sender": "SYSTEM",
@@ -24,15 +24,15 @@
         }
       ],
       "previousHash": "ca834f95f2748190599809de42c1de2422533e15e300f4d116bdd61a0c5a128b",
-      "nonce": 13001,
+      "nonce": 16533,
       "merkleRoot": "6a02d0de341be9215a077ba66bb7f835e842de4df0a72b9f28c14d8db034af97",
       "difficulty": 4,
-      "miningTimeNanoseconds": 2830500,
-      "hash": "0000dbf477180122f93b60e5e34b2532a0f8d172c7e8d21a5c06b47feaa8e071"
+      "miningTimeNanoseconds": 5719700,
+      "hash": "000006a0926532bdf419bbea9eca993cf82d25bca9875f2c8827b93e6f97e597"
     },
     {
       "index": 2,
-      "timestamp": 1786601892619602600,
+      "timestamp": 1786601928344310600,
       "transactions": [
         {
           "sender": "SYSTEM",
@@ -42,31 +42,12 @@
           "signature": ""
         }
       ],
-      "previousHash": "0000dbf477180122f93b60e5e34b2532a0f8d172c7e8d21a5c06b47feaa8e071",
-      "nonce": 46388,
+      "previousHash": "000006a0926532bdf419bbea9eca993cf82d25bca9875f2c8827b93e6f97e597",
+      "nonce": 79988,
       "merkleRoot": "8b6d52ee581791cd144f2b06c9d9a59729b13f0140626497be2a0b69f5301076",
       "difficulty": 5,
-      "miningTimeNanoseconds": 22185700,
-      "hash": "000009f33296b56be5142a225fabc16f9821927e63dcc1f70bf8d89e74a0e53b"
-    },
-    {
-      "index": 3,
-      "timestamp": 1786601892641788300,
-      "transactions": [
-        {
-          "sender": "SYSTEM",
-          "recipient": "User2",
-          "amount": 102,
-          "publicKey": "",
-          "signature": ""
-        }
-      ],
-      "previousHash": "000009f33296b56be5142a225fabc16f9821927e63dcc1f70bf8d89e74a0e53b",
-      "nonce": 2960989,
-      "merkleRoot": "061a51ceb3c71419f6bbb494bef1c42fd12569670e3c44edd0cffd94566e8ca8",
-      "difficulty": 6,
-      "miningTimeNanoseconds": 1253075700,
-      "hash": "000000bb7f36cc03763c8021dc4f9ab07ac2ebcf68b5db54128eb03741569277"
+      "miningTimeNanoseconds": 32464500,
+      "hash": "00000da9f2671639c1821749bd984c0b3c85923cff4d6ca9047b320b85497dbb"
     }
   ],
   "pendingTransactions": [],

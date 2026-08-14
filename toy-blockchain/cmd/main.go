@@ -1,11 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/ed25519"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -42,11 +46,12 @@ func usage() {
 	fmt.Println("  --key <path>      PEM private key file used to sign addtx transactions")
 }
 
-func parseCLI(args []string) (string, []string, int, bool, int, bool, string, string, string, []string, error) {
+func parseCLI(args []string) (string, []string, int, bool, int, bool, string, string, string, string, []string, error) {
 	difficulty := -1
 	blockSize := -1
 	dataFile := blockchain.DefaultDataFile
 	listenAddr := ""
+	nodeURL := ""
 	peers := []string{}
 	difficultySet := false
 	blockSizeSet := false
@@ -62,7 +67,7 @@ func parseCLI(args []string) (string, []string, int, bool, int, bool, string, st
 			value := strings.TrimPrefix(arg, "--difficulty=")
 			d, err := strconv.Atoi(value)
 			if err != nil {
-				return "", nil, 0, false, 0, false, "", "", "", nil, fmt.Errorf("invalid difficulty: %v", err)
+				return "", nil, 0, false, 0, false, "", "", "", "", nil, fmt.Errorf("invalid difficulty: %v", err)
 			}
 			difficulty = d
 			difficultySet = true
@@ -70,7 +75,7 @@ func parseCLI(args []string) (string, []string, int, bool, int, bool, string, st
 			value := strings.TrimPrefix(arg, "--blocksize=")
 			b, err := strconv.Atoi(value)
 			if err != nil {
-				return "", nil, 0, false, 0, false, "", "", "", nil, fmt.Errorf("invalid blocksize: %v", err)
+				return "", nil, 0, false, 0, false, "", "", "", "", nil, fmt.Errorf("invalid blocksize: %v", err)
 			}
 			blockSize = b
 			blockSizeSet = true
@@ -80,76 +85,92 @@ func parseCLI(args []string) (string, []string, int, bool, int, bool, string, st
 			listenAddr = strings.TrimPrefix(arg, "--listen=")
 		case strings.HasPrefix(arg, "--address="):
 			listenAddr = strings.TrimPrefix(arg, "--address=")
+		case strings.HasPrefix(arg, "--url="):
+			nodeURL = strings.TrimPrefix(arg, "--url=")
+		case strings.HasPrefix(arg, "--node="):
+			nodeURL = strings.TrimPrefix(arg, "--node=")
 		case strings.HasPrefix(arg, "--peer="):
 			peers = append(peers, strings.TrimPrefix(arg, "--peer="))
 		case strings.HasPrefix(arg, "--key="):
 			keyFile = strings.TrimPrefix(arg, "--key=")
 		case arg == "--difficulty":
 			if i+1 >= len(args) {
-				return "", nil, 0, false, 0, false, "", "", "", nil, fmt.Errorf("missing value for --difficulty")
+				return "", nil, 0, false, 0, false, "", "", "", "", nil, fmt.Errorf("missing value for --difficulty")
 			}
 			d, err := strconv.Atoi(args[i+1])
 			if err != nil {
-				return "", nil, 0, false, 0, false, "", "", "", nil, fmt.Errorf("invalid difficulty: %v", err)
+				return "", nil, 0, false, 0, false, "", "", "", "", nil, fmt.Errorf("invalid difficulty: %v", err)
 			}
 			difficulty = d
 			difficultySet = true
 			i++
 		case arg == "--blocksize":
 			if i+1 >= len(args) {
-				return "", nil, 0, false, 0, false, "", "", "", nil, fmt.Errorf("missing value for --blocksize")
+				return "", nil, 0, false, 0, false, "", "", "", "", nil, fmt.Errorf("missing value for --blocksize")
 			}
 			b, err := strconv.Atoi(args[i+1])
 			if err != nil {
-				return "", nil, 0, false, 0, false, "", "", "", nil, fmt.Errorf("invalid blocksize: %v", err)
+				return "", nil, 0, false, 0, false, "", "", "", "", nil, fmt.Errorf("invalid blocksize: %v", err)
 			}
 			blockSize = b
 			blockSizeSet = true
 			i++
 		case arg == "--listen":
 			if i+1 >= len(args) {
-				return "", nil, 0, false, 0, false, "", "", "", nil, fmt.Errorf("missing value for --listen")
+				return "", nil, 0, false, 0, false, "", "", "", "", nil, fmt.Errorf("missing value for --listen")
 			}
 			listenAddr = args[i+1]
 			i++
 		case arg == "--address":
 			if i+1 >= len(args) {
-				return "", nil, 0, false, 0, false, "", "", "", nil, fmt.Errorf("missing value for --address")
+				return "", nil, 0, false, 0, false, "", "", "", "", nil, fmt.Errorf("missing value for --address")
 			}
 			listenAddr = args[i+1]
 			i++
+		case arg == "--url":
+			if i+1 >= len(args) {
+				return "", nil, 0, false, 0, false, "", "", "", "", nil, fmt.Errorf("missing value for --url")
+			}
+			nodeURL = args[i+1]
+			i++
+		case arg == "--node":
+			if i+1 >= len(args) {
+				return "", nil, 0, false, 0, false, "", "", "", "", nil, fmt.Errorf("missing value for --node")
+			}
+			nodeURL = args[i+1]
+			i++
 		case arg == "--peer":
 			if i+1 >= len(args) {
-				return "", nil, 0, false, 0, false, "", "", "", nil, fmt.Errorf("missing value for --peer")
+				return "", nil, 0, false, 0, false, "", "", "", "", nil, fmt.Errorf("missing value for --peer")
 			}
 			peers = append(peers, args[i+1])
 			i++
 		case arg == "--file":
 			if i+1 >= len(args) {
-				return "", nil, 0, false, 0, false, "", "", "", nil, fmt.Errorf("missing value for --file")
+				return "", nil, 0, false, 0, false, "", "", "", "", nil, fmt.Errorf("missing value for --file")
 			}
 			dataFile = args[i+1]
 			i++
 		case arg == "--key":
 			if i+1 >= len(args) {
-				return "", nil, 0, false, 0, false, "", "", "", nil, fmt.Errorf("missing value for --key")
+				return "", nil, 0, false, 0, false, "", "", "", "", nil, fmt.Errorf("missing value for --key")
 			}
 			keyFile = args[i+1]
 			i++
 		case cmd == "" && isCommand(arg):
 			cmd = arg
 		case cmd == "" && !isCommand(arg):
-			return "", nil, 0, false, 0, false, "", "", "", nil, fmt.Errorf("unknown command: %s", arg)
+			return "", nil, 0, false, 0, false, "", "", "", "", nil, fmt.Errorf("unknown command: %s", arg)
 		default:
 			cmdArgs = append(cmdArgs, arg)
 		}
 	}
 
 	if cmd == "" {
-		return "", nil, 0, false, 0, false, "", "", "", nil, fmt.Errorf("command required")
+		return "", nil, 0, false, 0, false, "", "", "", "", nil, fmt.Errorf("command required")
 	}
 
-	return cmd, cmdArgs, difficulty, difficultySet, blockSize, blockSizeSet, dataFile, keyFile, listenAddr, peers, nil
+	return cmd, cmdArgs, difficulty, difficultySet, blockSize, blockSizeSet, dataFile, keyFile, listenAddr, nodeURL, peers, nil
 }
 
 func requiresPrivateKey(sender, keyFile string) bool {
@@ -209,7 +230,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	cmd, cmdArgs, difficulty, difficultySet, blockSize, blockSizeSet, dataFile, keyFile, listenAddr, peers, err := parseCLI(args)
+	cmd, cmdArgs, difficulty, difficultySet, blockSize, blockSizeSet, dataFile, keyFile, listenAddr, nodeURL, peers, err := parseCLI(args)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to parse CLI flags: %v\n", err)
 		os.Exit(1)
@@ -310,6 +331,34 @@ func main() {
 				os.Exit(1)
 			}
 			tx.Signature = signature
+		}
+
+		if nodeURL != "" {
+			url := strings.TrimRight(nodeURL, "/")
+			if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+				url = "http://" + url
+			}
+			url = url + "/transactions"
+
+			payload, err := json.Marshal(tx)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "failed to marshal transaction: %v\n", err)
+				os.Exit(1)
+			}
+
+			resp, err := http.Post(url, "application/json", bytes.NewBuffer(payload))
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "failed to post transaction to node at %s: %v\n", url, err)
+				os.Exit(1)
+			}
+			defer resp.Body.Close()
+			body, _ := io.ReadAll(resp.Body)
+			if resp.StatusCode >= 400 {
+				fmt.Fprintf(os.Stderr, "node rejected transaction (%d): %s\n", resp.StatusCode, string(body))
+				os.Exit(1)
+			}
+			fmt.Printf("transaction automatically signed with %s and posted to node %s: %s\n", keyFile, url, strings.TrimSpace(string(body)))
+			return
 		}
 
 		if err := bc.AddTransaction(tx); err != nil {

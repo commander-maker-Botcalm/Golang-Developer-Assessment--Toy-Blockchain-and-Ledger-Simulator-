@@ -62,7 +62,7 @@ func startIsolatedNode(t *testing.T, bc *blockchain.Blockchain) *node.Node {
 		ListenAddr: "127.0.0.1:0",
 		Peers:      []string{}, // isolated -- no peers yet
 		DataFile:   t.TempDir() + "/chain.json",
-		Difficulty: 1,         // low difficulty so tests run fast
+		Difficulty: 1, // low difficulty so tests run fast
 		BlockSize:  10,
 	}
 	n := node.NewNode(cfg)

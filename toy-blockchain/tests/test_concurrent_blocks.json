@@ -13,7 +13,7 @@
     },
     {
       "index": 1,
-      "timestamp": 1788072502121087300,
+      "timestamp": 1788072501913857400,
       "transactions": [
         {
           "sender": "SYSTEM",
@@ -24,33 +24,48 @@
         }
       ],
       "previousHash": "ca834f95f2748190599809de42c1de2422533e15e300f4d116bdd61a0c5a128b",
-      "nonce": 19037,
+      "nonce": 23,
       "merkleRoot": "6a02d0de341be9215a077ba66bb7f835e842de4df0a72b9f28c14d8db034af97",
-      "difficulty": 4,
-      "miningTimeNanoseconds": 11530000,
-      "hash": "000043e569bb278ff5c093cde1fff9f9f77a0f6be36bd56c9a7719025e60327e"
+      "difficulty": 1,
+      "miningTimeNanoseconds": 564200,
+      "hash": "081a8acde280e6905b8418ba20f4be0bd0829cabd6a6b886372b3fe6cf11473e"
     },
     {
       "index": 2,
-      "timestamp": 1788072502132617300,
+      "timestamp": 1788072502099436600,
       "transactions": [
         {
           "sender": "SYSTEM",
-          "recipient": "User1",
-          "amount": 101,
+          "recipient": "Fork4",
+          "amount": 1004,
           "publicKey": "",
           "signature": ""
         }
       ],
-      "previousHash": "000043e569bb278ff5c093cde1fff9f9f77a0f6be36bd56c9a7719025e60327e",
-      "nonce": 483395,
-      "merkleRoot": "8b6d52ee581791cd144f2b06c9d9a59729b13f0140626497be2a0b69f5301076",
-      "difficulty": 5,
-      "miningTimeNanoseconds": 404775800,
-      "hash": "000001131f6da59218bd557eff52b5514b27c5175630065cba06594f5d155b8b"
+      "previousHash": "081a8acde280e6905b8418ba20f4be0bd0829cabd6a6b886372b3fe6cf11473e",
+      "nonce": 19493,
+      "merkleRoot": "d27c17a382dadb2eb7691ce6c18cded5f81ecae1050b9712def3fbd12ce0ac5d",
+      "difficulty": 4,
+      "miningTimeNanoseconds": 18433200,
+      "hash": "000001ab34927bec1362cf795badd1580cbe2a9449401338784cd5f19822f024"
     }
   ],
-  "pendingTransactions": [],
+  "pendingTransactions": [
+    {
+      "sender": "SYSTEM",
+      "recipient": "User1",
+      "amount": 101,
+      "publicKey": "",
+      "signature": ""
+    },
+    {
+      "sender": "SYSTEM",
+      "recipient": "User2",
+      "amount": 102,
+      "publicKey": "",
+      "signature": ""
+    }
+  ],
   "difficulty": 4,
   "blockSize": 10
 }

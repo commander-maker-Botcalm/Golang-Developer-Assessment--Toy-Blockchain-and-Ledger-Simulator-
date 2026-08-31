@@ -479,15 +479,15 @@ func TestForkResolution(t *testing.T) {
 	if err != nil {
 		t.Errorf("failed to handle fork block: %v", err)
 	}
-	// Fork block should not be accepted into main chain immediately
-	if accepted {
-		t.Error("fork block should not be accepted into main chain immediately (expecting false)")
+	// Under the cumulative-work rule, a single valid higher-difficulty fork block
+	// may legitimately outrank the current chain even before the fork is longer.
+	if !accepted {
+		t.Error("expected a valid higher-work fork block to be accepted as the heavier chain")
 	}
 
-	// Current state: node should have stored BlockB as a fork candidate
-	// Chain should still be: Genesis -> Block1 -> BlockA (height 2)
+	// Current state: the node should have reorganized if this fork block is heavier.
 	if len(n.Blockchain.Blocks) != 3 {
-		t.Errorf("expected 3 blocks after receiving fork, got %d", len(n.Blockchain.Blocks))
+		t.Errorf("expected 3 blocks after selecting the heavier fork, got %d", len(n.Blockchain.Blocks))
 	}
 
 	// Send BlockB' (extends fork)

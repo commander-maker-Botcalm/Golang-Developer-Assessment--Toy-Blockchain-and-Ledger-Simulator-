@@ -13,7 +13,7 @@
     },
     {
       "index": 1,
-      "timestamp": 1786687167551308900,
+      "timestamp": 1788072478449325100,
       "transactions": [
         {
           "sender": "SYSTEM",
@@ -24,15 +24,15 @@
         }
       ],
       "previousHash": "ca834f95f2748190599809de42c1de2422533e15e300f4d116bdd61a0c5a128b",
-      "nonce": 481,
+      "nonce": 34983,
       "merkleRoot": "98b5ada9626b4e6b5370f03b9fb307f13a876eea71ed08bcd96599c9e490568f",
       "difficulty": 4,
-      "miningTimeNanoseconds": 0,
-      "hash": "00009fbe411b1f756da6891af70742bb5a61908186ec31301718231612b8cb1f"
+      "miningTimeNanoseconds": 22464100,
+      "hash": "000069b19128504809673e50c6921e04d152c10b0d6a5a4d77678a26eb88eb84"
     },
     {
       "index": 2,
-      "timestamp": 1786687168042118500,
+      "timestamp": 1788072481160686100,
       "transactions": [
         {
           "sender": "SYSTEM",
@@ -42,16 +42,16 @@
           "signature": ""
         }
       ],
-      "previousHash": "00009fbe411b1f756da6891af70742bb5a61908186ec31301718231612b8cb1f",
-      "nonce": 36422320,
+      "previousHash": "000069b19128504809673e50c6921e04d152c10b0d6a5a4d77678a26eb88eb84",
+      "nonce": 129569,
       "merkleRoot": "b7a67ede20c81a65dd170a0ebdd882c0e8e7e2036c3a6be027d7f9164d0e8346",
-      "difficulty": 6,
-      "miningTimeNanoseconds": 14475505300,
-      "hash": "00000024f88ee1911679d627f6d9f529d8a2aac2d20f8fab650e0b36d5286264"
+      "difficulty": 4,
+      "miningTimeNanoseconds": 101988500,
+      "hash": "00002a54fd65ee7f5d10a15718380bda0e2b0ecdd793dc13df035c875e0ff7c9"
     },
     {
       "index": 3,
-      "timestamp": 1786687182517623800,
+      "timestamp": 1788072481262674600,
       "transactions": [
         {
           "sender": "SYSTEM",
@@ -61,16 +61,16 @@
           "signature": ""
         }
       ],
-      "previousHash": "00000024f88ee1911679d627f6d9f529d8a2aac2d20f8fab650e0b36d5286264",
-      "nonce": 115614,
+      "previousHash": "00002a54fd65ee7f5d10a15718380bda0e2b0ecdd793dc13df035c875e0ff7c9",
+      "nonce": 320855,
       "merkleRoot": "a40cbae3e27f1e97138264cfdc209e5cede0c6718a4ecddd790da8426adc3009",
       "difficulty": 5,
-      "miningTimeNanoseconds": 47841500,
-      "hash": "00000b70b9a06010e2d7e0aa8775892ff330f475a98942c152a9b62e306ed082"
+      "miningTimeNanoseconds": 228808600,
+      "hash": "0000019b97a80c6ab01df30408a39d9a54bef1e426ec346551935f350f3a1388"
     },
     {
       "index": 4,
-      "timestamp": 1786687182565465300,
+      "timestamp": 1788072481491483200,
       "transactions": [
         {
           "sender": "SYSTEM",
@@ -80,12 +80,12 @@
           "signature": ""
         }
       ],
-      "previousHash": "00000b70b9a06010e2d7e0aa8775892ff330f475a98942c152a9b62e306ed082",
-      "nonce": 7447,
+      "previousHash": "0000019b97a80c6ab01df30408a39d9a54bef1e426ec346551935f350f3a1388",
+      "nonce": 18209979,
       "merkleRoot": "48303f18edd2a5bb0d34153ccd25ab549bc1dea1b18a33d5c015406c58f7614b",
-      "difficulty": 4,
-      "miningTimeNanoseconds": 2738400,
-      "hash": "000047ebe4aa934abd75862351f7b87884b202843ecc6ecac208332be2843843"
+      "difficulty": 6,
+      "miningTimeNanoseconds": 14093703900,
+      "hash": "000000de7567c776d88709651191f3b0e52da432113bc5a89acf4c9c107461af"
     }
   ],
   "pendingTransactions": [
@@ -97,6 +97,6 @@
       "signature": ""
     }
   ],
-  "difficulty": 6,
+  "difficulty": 4,
   "blockSize": 10
 }

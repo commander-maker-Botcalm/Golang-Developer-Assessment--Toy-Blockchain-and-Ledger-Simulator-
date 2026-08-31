@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/big"
 	"net"
 	"net/http"
 	"os"
@@ -363,8 +364,9 @@ func (n *Node) validateForkCandidate(block *blockchain.Block) error {
 }
 
 func (n *Node) tryResolveForksLocked() (bool, error) {
-	currentLen := len(n.Blockchain.Blocks)
+	currentWork := blockchain.ChainWork(n.Blockchain.Blocks)
 	var bestCandidate []*blockchain.Block
+	var bestWork *big.Int
 
 	for _, competingBlocks := range n.forks {
 		for _, forkBlock := range competingBlocks {
@@ -374,24 +376,19 @@ func (n *Node) tryResolveForksLocked() (bool, error) {
 			}
 
 			forkStart := candidate[0].Index
-			candidateTotalLength := forkStart + len(candidate)
-			if candidateTotalLength <= currentLen {
-				continue
-			}
-
 			if err := n.validateCandidateChainLocked(candidate); err != nil {
 				n.logger.Printf("candidate chain invalid starting at index %d: %v", forkStart, err)
 				continue
 			}
 
-			if bestCandidate == nil {
-				bestCandidate = candidate
+			candidateWork := blockchain.ChainWork(candidate)
+			if candidateWork.Cmp(currentWork) <= 0 {
 				continue
 			}
 
-			bestTotal := bestCandidate[0].Index + len(bestCandidate)
-			if candidateTotalLength > bestTotal {
+			if bestCandidate == nil || candidateWork.Cmp(bestWork) > 0 {
 				bestCandidate = candidate
+				bestWork = candidateWork
 			}
 		}
 	}
@@ -657,7 +654,9 @@ func (n *Node) CompareChains(currentChain, candidateChain []*blockchain.Block) b
 	if currentChain == nil {
 		return len(candidateChain) > 0
 	}
-	return len(candidateChain) > len(currentChain)
+	candidateWork := blockchain.ChainWork(candidateChain)
+	currentWork := blockchain.ChainWork(currentChain)
+	return candidateWork.Cmp(currentWork) > 0
 }
 
 // ClearForksAt removes all fork entries at or below a given index.

@@ -57,12 +57,22 @@ func CopyBlockchain(bc *Blockchain) *Blockchain {
 }
 
 // ResolveFork compares two chains and returns the chosen chain according to
-// the following rules (simulating a simple longest-valid-chain policy):
+// the following rules:
 //  1. Validate both chains first. If only one is valid, return it.
-//  2. If both are valid, return the chain with more blocks.
-//  3. If both are valid and equal length, return the first chain (chainA).
+//  2. If both are valid, choose the chain with greater cumulative proof-of-work.
+//  3. If both are valid and have equal cumulative work, keep chainA as the
+//     deterministic tie-breaker; block count is not used as a consensus rule.
 func ResolveFork(chainA, chainB *Blockchain) *Blockchain {
-	// Validate both chains
+	if chainA == nil && chainB == nil {
+		return nil
+	}
+	if chainA == nil {
+		return chainB
+	}
+	if chainB == nil {
+		return chainA
+	}
+
 	errA := chainA.Validate()
 	errB := chainB.Validate()
 
@@ -75,14 +85,17 @@ func ResolveFork(chainA, chainB *Blockchain) *Blockchain {
 	case !validA && validB:
 		return chainB
 	case !validA && !validB:
-		// neither valid — prefer chainA as a deterministic fallback
 		return chainA
 	default:
-		// both valid — choose longest
-		if len(chainA.Blocks) >= len(chainB.Blocks) {
+		workA := ChainWork(chainA.Blocks)
+		workB := ChainWork(chainB.Blocks)
+		if workA.Cmp(workB) > 0 {
 			return chainA
 		}
-		return chainB
+		if workB.Cmp(workA) > 0 {
+			return chainB
+		}
+		return chainA
 	}
 }
 

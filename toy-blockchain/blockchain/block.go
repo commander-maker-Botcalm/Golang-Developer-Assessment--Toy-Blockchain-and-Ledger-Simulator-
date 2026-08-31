@@ -3,6 +3,7 @@ package blockchain
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"runtime"
 	"strings"
 	"sync"
@@ -70,6 +71,35 @@ func NewBlock(index int, txs []transaction.Transaction, prevHash string) *Block 
 // The first worker to find a valid hash sends its block back over a channel,
 // and cancellation is propagated to all other workers using context.
 // The original block receives the successful nonce and hash before returning.
+// BlockWork returns the expected proof-of-work contribution for a block.
+// In a SHA-256 PoW system, a block meeting difficulty N has a target prefix of
+// N leading zero bytes/hex chars, and the expected work is proportional to 16^N.
+// We use exact integer arithmetic so consensus decisions never rely on floats.
+func BlockWork(block *Block) *big.Int {
+	if block == nil || block.Difficulty <= 0 {
+		return big.NewInt(0)
+	}
+	return new(big.Int).Exp(big.NewInt(16), big.NewInt(int64(block.Difficulty)), nil)
+}
+
+// ChainWork returns the cumulative expected work of a chain.
+// The genesis block contributes zero work; all subsequent blocks contribute
+// their block work, allowing comparison of the heaviest valid chain without
+// using block count as a proxy for PoW.
+func ChainWork(chain []*Block) *big.Int {
+	total := big.NewInt(0)
+	for i, block := range chain {
+		if block == nil {
+			continue
+		}
+		if i == 0 && block.Index == 0 {
+			continue
+		}
+		total.Add(total, BlockWork(block))
+	}
+	return total
+}
+
 func (b *Block) Mine(difficulty int) {
 	// Store the intended difficulty on the block so the mining routines and
 	// future validation use the same difficulty value. This preserves a
